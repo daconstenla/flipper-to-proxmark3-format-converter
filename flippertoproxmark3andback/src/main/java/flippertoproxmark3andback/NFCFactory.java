@@ -6,6 +6,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -16,8 +18,10 @@ import flippertoproxmark3andback.Constants.KeyType;
 import flippertoproxmark3andback.Constants.NfcType;
 
 public class NFCFactory {
+    private static final Logger LOGGER = Logger.getLogger(NFCFactory.class.getName());
     
     public static NFC createNFCFromFile(File file) throws FileNotFoundException, ParseException {
+        LOGGER.fine(() -> "Inspecting NFC dump " + file.getAbsolutePath());
         String path = file.getAbsolutePath();
         FileType fileType = Constants.fileExtensionToFileType.get(path.substring(path.indexOf(".")+1));
         if (fileType == FileType.flipper) {
@@ -28,6 +32,7 @@ public class NFCFactory {
             //createdBy = "FlipperZero";
             // System.out.println();
             String deviceType = lines.get(2).substring(13);//Device type: "inserthere"
+            LOGGER.fine(() -> "Detected Flipper device type " + deviceType);
             //System.out.println(deviceType);
             //System.out.println(scan.nextLine());// UID is common for all formats
             //String[] UID = scan.nextLine().substring(5).split(" ");//UID: "inserthere"
@@ -62,6 +67,7 @@ public class NFCFactory {
                 //System.out.println(this.createdBy);
                 //this.UID = hexStrToIntArr(hashMap.get("UID"));
                 String nfcStr = Constants.proxmarkFiletypeToFlipperDevice.get(nfcArray.get("FileType"));
+                LOGGER.fine(() -> "Detected Proxmark card type " + nfcStr);
                 if (nfcStr.equals("Mifare Classic")) {
                     return new MifareClassic(file);
                 } else if (nfcStr.equals("UID")) {//Any other type of nfc tag
@@ -77,10 +83,8 @@ public class NFCFactory {
                 
 
                 
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
             } catch (IOException e) {
-                e.printStackTrace();
+                LOGGER.log(Level.WARNING, "Unable to inspect JSON dump " + file.getAbsolutePath(), e);
             }
             
 

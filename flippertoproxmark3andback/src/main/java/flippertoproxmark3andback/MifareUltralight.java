@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -18,6 +20,8 @@ import flippertoproxmark3andback.Constants.MifareClassicType;
 import flippertoproxmark3andback.Constants.MifareUltralightType;
 
 public class MifareUltralight extends RFIDCard {//TODO: NEEDS TO BE WORKED ON
+    private static final Logger LOGGER = Logger.getLogger(MifareUltralight.class.getName());
+
     private int[][] blocks;//Saved in Proxmark format (Note: remember to switch to flipper format for flipper stuff)
     private int[] signature;
     private int[] version;
@@ -32,7 +36,7 @@ public class MifareUltralight extends RFIDCard {//TODO: NEEDS TO BE WORKED ON
 
     public MifareUltralight(File file) throws FileNotFoundException, org.json.simple.parser.ParseException {
         super(file);
-        System.out.println("MifareUltralight!");
+        LOGGER.fine(() -> "Reading MIFARE Ultralight data from " + file.getName());
         if (FileType.flipper == this.getImportFileType()) {
             ArrayList<String> lines = Constants.flipperFileToCleanedListOfLines(file);
             //System.out.println(scan.nextLine());// Mifare Ultralight specific data
@@ -56,9 +60,9 @@ public class MifareUltralight extends RFIDCard {//TODO: NEEDS TO BE WORKED ON
                 blocks[i] = Constants.hexStrArrtoIntArr(line.substring(line.indexOf(":")+2).split(" "));
             }
             mifareUltralightType = Constants.mfuVersionPlusPageTotalToMfuType.get(Constants.arrToHexString(version, false, true) + " " + pagesTotal);
-            System.out.println(Constants.arrToHexString(version, false, true));
-            System.out.println(pagesTotal);
-            System.out.println(mifareUltralightType);
+                LOGGER.fine(() -> "Detected MIFARE Ultralight version "
+                    + Constants.arrToHexString(version, false, true) + " with " + pagesTotal
+                    + " pages; card type is " + mifareUltralightType);
 
 
 
@@ -95,10 +99,8 @@ public class MifareUltralight extends RFIDCard {//TODO: NEEDS TO BE WORKED ON
                 }
                 mifareUltralightType = Constants.mfuVersionPlusPageTotalToMfuType.get(Constants.arrToHexString(version, false, true) + " " + pagesTotal);
                 reader.close();
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
             } catch (IOException e) {
-                e.printStackTrace();
+                LOGGER.log(Level.WARNING, "Unable to read MIFARE Ultralight JSON file " + file.getAbsolutePath(), e);
             }
         }
     }

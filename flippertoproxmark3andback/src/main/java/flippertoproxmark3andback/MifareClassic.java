@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -19,6 +21,8 @@ import flippertoproxmark3andback.Constants.MifareClassicType;
 import flippertoproxmark3andback.Constants.NfcType;
 
 public class MifareClassic extends RFIDCard {//Can be 1k or 4k
+    private static final Logger LOGGER = Logger.getLogger(MifareClassic.class.getName());
+
     private int[][] blocks;//Saved in Proxmark format (Note: remember to switch to flipper format for flipper stuff)
     private SectorKey[] sectorKeys;
     private MifareClassicType mifareClassicType;
@@ -27,7 +31,7 @@ public class MifareClassic extends RFIDCard {//Can be 1k or 4k
 
     public MifareClassic(File file) throws FileNotFoundException, org.json.simple.parser.ParseException {
         super(file);
-        System.out.println("MifareClassic!");
+        LOGGER.fine(() -> "Reading MIFARE Classic data from " + file.getName());
         if (FileType.flipper == this.getImportFileType()) {
             ArrayList<String> lines = Constants.flipperFileToCleanedListOfLines(file);
             //System.out.println(scan.nextLine());// Mifare Classic specific data
@@ -126,21 +130,19 @@ public class MifareClassic extends RFIDCard {//Can be 1k or 4k
                     JSONObject card = (JSONObject) nfcArray.get("Card");
                     JSONObject blocksObject = (JSONObject) nfcArray.get("blocks");
 
-                    System.out.println((String) card.get("SAK") + "!");
+                    LOGGER.fine(() -> "Detected MIFARE Classic SAK " + card.get("SAK"));
                     this.mifareClassicType = Constants.sakToMfcType.get((String) card.get("SAK"));
                     if (MifareClassicType.MFC1k == this.mifareClassicType) {//Here
-                        System.out.println("1K!");
                         blocks = new int[64][16];
                         sectorKeys = new SectorKey[16];
                     } else if (MifareClassicType.MFC4k == this.mifareClassicType) {//Also a work in progress
-                        System.out.println("4K!");
                         blocks = new int[256][16];
                         sectorKeys = new SectorKey[40];
                     } else {
-                        System.out.println("Mini!");
                         blocks = new int[20][16];
                         sectorKeys = new SectorKey[5];
                     }
+                    LOGGER.fine(() -> "Detected MIFARE Classic card type " + this.mifareClassicType);
                     for (int i = 0; i < blocks.length; i++) {
                         this.blocks[i] = Constants.hexStrToIntArr((String) blocksObject.get("" + i));
                     }
@@ -154,10 +156,8 @@ public class MifareClassic extends RFIDCard {//Can be 1k or 4k
 
                     }
                     reader.close();
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    LOGGER.log(Level.WARNING, "Unable to read MIFARE Classic JSON file " + file.getAbsolutePath(), e);
                 }
         }
     }

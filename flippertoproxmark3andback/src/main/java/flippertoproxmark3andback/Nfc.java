@@ -7,6 +7,8 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.io.FileWriter;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import flippertoproxmark3andback.Constants.FileType;
 
@@ -14,6 +16,8 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
 public class NFC {
+    private static final Logger LOGGER = Logger.getLogger(NFC.class.getName());
+
     //This class does only UIDs but branches out into all other types of NFC devices supported by flipper zero
     private String createdBy;
     private FileType importFileType;
@@ -36,7 +40,7 @@ public class NFC {
         String path = file.getAbsolutePath();
         this.importFileType = Constants.fileExtensionToFileType.get(path.substring(path.indexOf(".")+1));
         FileType fileType = importFileType;
-        System.out.println("NFC!");
+        LOGGER.fine(() -> "Reading NFC data from " + file.getName());
         //System.out.println(importFileType);
 
         
@@ -70,10 +74,8 @@ public class NFC {
                 JSONObject card = (JSONObject) nfcArray.get("Card");
                 this.UID = Constants.hexStrToIntArr((String) card.get("UID"));
                 reader.close();
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
             } catch (IOException e) {
-                e.printStackTrace();
+                LOGGER.log(Level.WARNING, "Unable to read NFC JSON file " + file.getAbsolutePath(), e);
             }
 
         }

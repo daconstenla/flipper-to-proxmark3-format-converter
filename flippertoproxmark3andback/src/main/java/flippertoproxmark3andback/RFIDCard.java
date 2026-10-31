@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -17,6 +19,7 @@ import flippertoproxmark3andback.Constants.KeyType;
 import flippertoproxmark3andback.Constants.NfcType;
 
 public class RFIDCard extends NFC {
+    private static final Logger LOGGER = Logger.getLogger(RFIDCard.class.getName());
 
     //ISO14443(ID cards rfid) Specific fields//TODO: potentially split nfc into different classes and make a detector method that returns the type of nfc object required
     private int[] ATQA;//Saved in Proxmark format (Note: remember to switch to flipper format for flipper stuff) 
@@ -31,7 +34,7 @@ public class RFIDCard extends NFC {
 
     public RFIDCard(File file) throws FileNotFoundException, org.json.simple.parser.ParseException {
         super(file);
-        System.out.println("RFIDCard!");
+        LOGGER.fine(() -> "Reading ISO14443 card data from " + file.getName());
         if (FileType.flipper == this.getImportFileType()) {
             ArrayList<String> lines = Constants.flipperFileToCleanedListOfLines(file);
             //System.out.println(scan.nextLine());// ISO14443 specific fields
@@ -61,10 +64,8 @@ public class RFIDCard extends NFC {
                 }
                 
                 reader.close();
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
             } catch (IOException e) {
-                e.printStackTrace();
+                LOGGER.log(Level.WARNING, "Unable to read RFID JSON file " + file.getAbsolutePath(), e);
             }
         }
     }
