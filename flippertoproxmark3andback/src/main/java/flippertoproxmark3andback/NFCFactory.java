@@ -5,7 +5,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Scanner;
 
 import org.json.simple.JSONObject;
@@ -61,8 +60,6 @@ public class NFCFactory {
                 //System.out.println(nfcArray);
                 //this.createdBy = (String) nfcArray.get("Created");
                 //System.out.println(this.createdBy);
-                HashMap<String, String> hashMap = (HashMap) nfcArray.get("Card");
-                //System.out.println(hashMap.toString());
                 //this.UID = hexStrToIntArr(hashMap.get("UID"));
                 String nfcStr = Constants.proxmarkFiletypeToFlipperDevice.get(nfcArray.get("FileType"));
                 if (nfcStr.equals("Mifare Classic")) {

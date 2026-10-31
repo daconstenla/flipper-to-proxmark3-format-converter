@@ -7,7 +7,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Scanner;
 
 import org.json.simple.JSONObject;
@@ -73,26 +72,26 @@ public class MifareUltralight extends RFIDCard {//TODO: NEEDS TO BE WORKED ON
                 Object obj = jsonParser.parse(reader);
                 
                 JSONObject nfcArray = (JSONObject) obj;
-                HashMap<String, String> hashMap = (HashMap) nfcArray.get("Card");
-                HashMap<String, String> hashMapBlocks = (HashMap) nfcArray.get("blocks");
-                signature = Constants.hexStrToIntArr(hashMap.get("Signature")); 
-                version = Constants.hexStrToIntArr(hashMap.get("Version"));
+                JSONObject card = (JSONObject) nfcArray.get("Card");
+                JSONObject blocksObject = (JSONObject) nfcArray.get("blocks");
+                signature = Constants.hexStrToIntArr((String) card.get("Signature"));
+                version = Constants.hexStrToIntArr((String) card.get("Version"));
                 counter = new int[3];
                 tearing = new int[3];
-                counter[0] = Constants.hexStrToInt(hashMap.get("Counter0"));//Could be binary could be hex, hard to tell (Assuming it's hex at the minute) // it's hex
-                tearing[0] = Constants.hexStrToInt(hashMap.get("Tearing0"));
-                counter[1] = Constants.hexStrToInt(hashMap.get("Counter1"));
-                tearing[1] = Constants.hexStrToInt(hashMap.get("Tearing1"));
-                counter[2] = Constants.hexStrToInt(hashMap.get("Counter2"));
-                tearing[2] = Constants.hexStrToInt(hashMap.get("Tearing2"));
+                counter[0] = Constants.hexStrToInt((String) card.get("Counter0"));//Could be binary could be hex, hard to tell (Assuming it's hex at the minute) // it's hex
+                tearing[0] = Constants.hexStrToInt((String) card.get("Tearing0"));
+                counter[1] = Constants.hexStrToInt((String) card.get("Counter1"));
+                tearing[1] = Constants.hexStrToInt((String) card.get("Tearing1"));
+                counter[2] = Constants.hexStrToInt((String) card.get("Counter2"));
+                tearing[2] = Constants.hexStrToInt((String) card.get("Tearing2"));
                 int pagesTotal = 0;
-                for (int i = 0; hashMapBlocks.containsKey(""+i); i++) {
+                for (int i = 0; blocksObject.containsKey(""+i); i++) {
                     pagesTotal = i;
                 }
                 pagesTotal++;
                 blocks = new int[pagesTotal][4];
                 for (int i = 0; i < blocks.length; i++) {
-                    blocks[i] = Constants.hexStrToIntArr(hashMapBlocks.get(""+i));
+                    blocks[i] = Constants.hexStrToIntArr((String) blocksObject.get(""+i));
                 }
                 mifareUltralightType = Constants.mfuVersionPlusPageTotalToMfuType.get(Constants.arrToHexString(version, false, true) + " " + pagesTotal);
                 reader.close();

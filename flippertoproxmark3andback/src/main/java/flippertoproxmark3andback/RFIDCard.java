@@ -7,7 +7,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Scanner;
 
 import org.json.simple.JSONObject;
@@ -52,10 +51,10 @@ public class RFIDCard extends NFC {
                 Object obj = jsonParser.parse(reader);
                 
                 JSONObject nfcArray = (JSONObject) obj;
-                HashMap<String, String> hashMap = (HashMap) nfcArray.get("Card");
-                if (hashMap.containsKey("SAK")) {
-                    this.SAK = Constants.hexStrToInt(hashMap.get("SAK"));
-                    this.ATQA = Constants.hexStrToIntArr(hashMap.get("ATQA"));
+                JSONObject card = (JSONObject) nfcArray.get("Card");
+                if (card.containsKey("SAK")) {
+                    this.SAK = Constants.hexStrToInt((String) card.get("SAK"));
+                    this.ATQA = Constants.hexStrToIntArr((String) card.get("ATQA"));
                 } else {//Ultralight
                     this.SAK = Constants.hexStrToInt("00");
                     this.ATQA = new int[]{Constants.hexStrToInt("44"), Constants.hexStrToInt("00")};

@@ -7,7 +7,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Scanner;
 
 import org.json.simple.JSONArray;
@@ -124,11 +123,11 @@ public class MifareClassic extends RFIDCard {//Can be 1k or 4k
                     //Read JSON file
                     Object obj = jsonParser.parse(reader);
                     JSONObject nfcArray = (JSONObject) obj;
-                    HashMap<String, String> hashMap = (HashMap) nfcArray.get("Card");
-                    HashMap<String, String> hashMapBlocks = (HashMap) nfcArray.get("blocks");
+                    JSONObject card = (JSONObject) nfcArray.get("Card");
+                    JSONObject blocksObject = (JSONObject) nfcArray.get("blocks");
 
-                    System.out.println((String)hashMap.get("SAK") + "!");
-                    this.mifareClassicType = Constants.sakToMfcType.get((String)hashMap.get("SAK"));
+                    System.out.println((String) card.get("SAK") + "!");
+                    this.mifareClassicType = Constants.sakToMfcType.get((String) card.get("SAK"));
                     if (MifareClassicType.MFC1k == this.mifareClassicType) {//Here
                         System.out.println("1K!");
                         blocks = new int[64][16];
@@ -143,7 +142,7 @@ public class MifareClassic extends RFIDCard {//Can be 1k or 4k
                         sectorKeys = new SectorKey[5];
                     }
                     for (int i = 0; i < blocks.length; i++) {
-                        this.blocks[i] = Constants.hexStrToIntArr((String) hashMapBlocks.get("" + i));
+                        this.blocks[i] = Constants.hexStrToIntArr((String) blocksObject.get("" + i));
                     }
                     JSONObject sectorKeysObject = (JSONObject) nfcArray.get("SectorKeys");
                     

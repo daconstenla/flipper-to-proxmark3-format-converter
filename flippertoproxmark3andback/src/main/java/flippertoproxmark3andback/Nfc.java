@@ -5,7 +5,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Scanner;
 import java.io.FileWriter;
 
@@ -68,9 +67,8 @@ public class NFC {
                 //System.out.println(nfcArray);
                 this.createdBy = (String) nfcArray.get("Created");
                 //System.out.println(this.createdBy);
-                HashMap<String, String> hashMap = (HashMap) nfcArray.get("Card");
-                //System.out.println(hashMap.toString());
-                this.UID = Constants.hexStrToIntArr(hashMap.get("UID"));
+                JSONObject card = (JSONObject) nfcArray.get("Card");
+                this.UID = Constants.hexStrToIntArr((String) card.get("UID"));
                 reader.close();
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
