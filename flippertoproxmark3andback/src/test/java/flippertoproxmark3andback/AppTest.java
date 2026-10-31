@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AppTest {
@@ -41,6 +42,22 @@ class AppTest {
         File inputFile = new File("card.txt");
 
         assertNull(Constants.fileTypeFromFile(inputFile));
+    }
+
+    @Test
+    void parsesCustomOutputUsingFinalExtension() {
+        NfcDumpConverter.ConversionRequest request = NfcDumpConverter.parseArguments(new String[] {
+                "convert", "card.nfc", "export", "folder.with.dots/output.v2.JSON"
+        });
+
+        assertEquals(Constants.FileType.proxmark3, request.outputType());
+        assertEquals("folder.with.dots/output.v2", request.customName());
+    }
+
+    @Test
+    void rejectsIncompleteConversionArguments() {
+        assertThrows(IllegalArgumentException.class,
+                () -> NfcDumpConverter.parseArguments(new String[] {"convert"}));
     }
 
     private String runMain(String... args) throws Exception {

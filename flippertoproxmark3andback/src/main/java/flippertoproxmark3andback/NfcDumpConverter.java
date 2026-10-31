@@ -22,12 +22,16 @@ public class NfcDumpConverter {
             return;
         }
 
-        if (!"convert".equals(args[0]) || args.length < 4 || !"export".equals(args[2])) {
+        ConversionRequest request;
+        try {
+            request = parseArguments(args);
+        } catch (IllegalArgumentException e) {
+            LOGGER.severe(e.getMessage());
             help();
             return;
         }
 
-        File inputFile = new File(args[1]);
+        File inputFile = request.inputFile();
         LOGGER.info(() -> "Converting input file " + inputFile.getPath());
         if (!inputFile.isFile()) {
             LOGGER.severe("Input file does not exist or is not a regular file: " + inputFile.getPath());
@@ -35,11 +39,18 @@ public class NfcDumpConverter {
         }
 
         NFC nfc = NFCFactory.createNFCFromFile(inputFile);
+        export(nfc, request.outputType(), request.customName());
+    }
+
+    static ConversionRequest parseArguments(String[] args) {
+        if (args.length < 4 || !"convert".equals(args[0]) || !"export".equals(args[2])) {
+            throw new IllegalArgumentException("Expected: convert <input> export <output> [nfc|json]");
+        }
+
         String outputArgument = args[3];
         if ("default".equals(outputArgument)) {
             if (args.length != 5) {
-                help();
-                return;
+                throw new IllegalArgumentException("Default output requires a format: nfc or json");
             }
 
             FileType outputType;
@@ -48,35 +59,31 @@ public class NfcDumpConverter {
             } else if ("json".equals(args[4])) {
                 outputType = FileType.proxmark3;
             } else {
-                help();
-                return;
+                throw new IllegalArgumentException("Unsupported default output format: " + args[4]);
             }
 
-            export(nfc, outputType, "");
-            return;
+            return new ConversionRequest(new File(args[1]), outputType, "");
         }
 
         if (args.length != 4) {
-            help();
-            return;
+            throw new IllegalArgumentException("A custom output path must be the final argument");
         }
-
         int extensionIndex = outputArgument.lastIndexOf('.');
         int fileNameStart = Math.max(outputArgument.lastIndexOf('/'), outputArgument.lastIndexOf('\\'));
         if (extensionIndex <= fileNameStart || extensionIndex == outputArgument.length() - 1) {
-            LOGGER.severe("Output path must have a .nfc or .json extension: " + outputArgument);
-            return;
+            throw new IllegalArgumentException("Output path must have a .nfc or .json extension: " + outputArgument);
         }
 
         String extension = outputArgument.substring(extensionIndex + 1).toLowerCase(Locale.ROOT);
         FileType outputType = Constants.fileExtensionToFileType.get(extension);
         if (outputType == null) {
-            LOGGER.severe("Unsupported output file extension: " + extension);
-            return;
+            throw new IllegalArgumentException("Unsupported output file extension: " + extension);
         }
 
-        export(nfc, outputType, outputArgument.substring(0, extensionIndex));
+        return new ConversionRequest(new File(args[1]), outputType, outputArgument.substring(0, extensionIndex));
     }
+
+    record ConversionRequest(File inputFile, FileType outputType, String customName) {}
 
     private static void export(NFC nfc, FileType outputType, String customName) throws IOException {
         File outputFile;
