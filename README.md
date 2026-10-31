@@ -4,6 +4,23 @@ This tool is for switching nfc file formats between .nfc (Flipper NFC Format) an
 
 **Works for MIFARE 1k, 4k, Mini cards and Mifare Ultralight/NTAGS**
 
+## Build from source
+
+Install Java 17 or newer. From the repository root, run:
+
+```sh
+./gradlew clean test jar
+```
+
+On Windows, run:
+
+```bat
+gradlew.bat clean test jar
+```
+
+The executable jar, including its runtime dependencies, is created at
+`flippertoproxmark3andback/build/libs/flippertoproxmark3andback.jar`.
+
 ## How to use?
 
 1. Download the latest jar file from the latest github release
