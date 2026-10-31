@@ -24,7 +24,7 @@ repositories {
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(27)
     }
 }
 
@@ -51,7 +51,7 @@ tasks.named('test') {
 }
 
 tasks.withType(JavaCompile).configureEach {
-    options.release = 21
+    options.release = 27
     options.compilerArgs += ['-Xlint:unchecked']
 }
 

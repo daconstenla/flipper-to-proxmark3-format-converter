@@ -6,7 +6,7 @@ This tool is for switching nfc file formats between .nfc (Flipper NFC Format) an
 
 ## Build from source
 
-Install Java 21 or newer. From the repository root, run:
+Install Java 27 or newer. From the repository root, run:
 
 ```sh
 ./gradlew clean test jar
