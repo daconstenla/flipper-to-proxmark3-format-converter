@@ -69,11 +69,15 @@ public class NFCFactory {
                 //System.out.println(this.createdBy);
                 //this.UID = hexStrToIntArr(hashMap.get("UID"));
                 String nfcStr = Constants.proxmarkFiletypeToFlipperDevice.get(nfcArray.get("FileType"));
+                if (nfcStr == null) {
+                    throw new IllegalArgumentException("Unsupported Proxmark3 file type: " + nfcArray.get("FileType"));
+                }
                 LOGGER.fine(() -> "Detected Proxmark card type " + nfcStr);
                 if (nfcStr.equals("Mifare Classic")) {
                     return new MifareClassic(file);
                 } else if (nfcStr.equals("UID")) {//Any other type of nfc tag
-                    return new RFIDCard(file);
+                    JSONObject card = (JSONObject) nfcArray.get("Card");
+                    return card.containsKey("SAK") ? new RFIDCard(file) : new NFC(file);
                 } else if (nfcStr.equals("Mifare Ultralight")) {
                     return new MifareUltralight(file);
                 } else {

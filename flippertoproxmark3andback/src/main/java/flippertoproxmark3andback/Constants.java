@@ -127,12 +127,14 @@ public static HashMap<String, MifareUltralightType> mfuVersionPlusPageTotalToMfu
     put("Mifare Classic", "mfc v2");
     put("Mifare Ultralight", "mfu");
 }};
-    public static HashMap<String, String> proxmarkFiletypeToFlipperDevice = new HashMap<String, String>() {{
+public static HashMap<String, String> proxmarkFiletypeToFlipperDevice = new HashMap<String, String>() {{
     //put("null", ISO15693);//Don't know what the null types are yet
     //put("null", UID);
     put("mfcard", "Mifare Classic");
     put("mfc v2", "Mifare Classic");
     put("mfu", "Mifare Ultralight");
+    put("uid", "UID");
+    put("rfidcard", "UID");
 }};
     public static HashMap<String, NfcType> nfcStrToNfcType = new HashMap<String, NfcType>() {{
     //put("null", ISO15693);//Don't know what the null types are yet

@@ -25,13 +25,21 @@ The executable jar, including its runtime dependencies, is created at
 
 1. Download the latest jar file from the latest github release
 2. Move the jar file to the file you wish to convert
-3. Run the jar file in the command line in the following format
+3. Pass only the input file to automatically create the other format beside it:
+
+```sh
+java -jar flippertoproxmark3andback.jar "flipper.nfc"        # creates flipper.json
+java -jar flippertoproxmark3andback.jar "proxmark3-dump.json" # creates proxmark3-dump.nfc
 ```
-java -jar enter-jar-name-here.jar convert "flipper.nfc" | "proxmark3-dump.json" export "enter-file-name-here-with-extension-you-want-to-convert-to"
-or
-java -jar enter-jar-name-here.jar convert "flipper.nfc" | "proxmark3-dump.json" export default json | nfc
+
+If the output file already exists, the app asks before replacing it. The default response is no.
+
+To choose a different output filename or use the default generated filename, run:
+
 ```
-(2nd example is default mode)
+java -jar flippertoproxmark3andback.jar convert "flipper.nfc" export "proxmark3-dump.json"
+java -jar flippertoproxmark3andback.jar convert "proxmark3-dump.json" export default nfc
+```
 Default mode allows for the corresponding automatic name generation format:
 
 for .json: Proxmark3 | FlipperZero-(insert-uid-here)-dump.json

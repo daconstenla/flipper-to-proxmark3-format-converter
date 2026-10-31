@@ -2,8 +2,11 @@ package flippertoproxmark3andback;
 
 import flippertoproxmark3andback.Constants.FileType;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.logging.Logger;
 
@@ -43,6 +46,10 @@ public class NfcDumpConverter {
     }
 
     static ConversionRequest parseArguments(String[] args) {
+        if (args.length == 1) {
+            return parseInputOnlyArgument(args[0]);
+        }
+
         if (args.length < 4 || !"convert".equals(args[0]) || !"export".equals(args[2])) {
             throw new IllegalArgumentException("Expected: convert <input> export <output> [nfc|json]");
         }
@@ -83,9 +90,32 @@ public class NfcDumpConverter {
         return new ConversionRequest(new File(args[1]), outputType, outputArgument.substring(0, extensionIndex));
     }
 
+    private static ConversionRequest parseInputOnlyArgument(String inputArgument) {
+        File inputFile = new File(inputArgument);
+        FileType inputType = Constants.fileTypeFromFile(inputFile);
+        if (inputType == null) {
+            throw new IllegalArgumentException("Input file must have a .nfc or .json extension: " + inputArgument);
+        }
+
+        int extensionIndex = inputArgument.lastIndexOf('.');
+        int fileNameStart = Math.max(inputArgument.lastIndexOf('/'), inputArgument.lastIndexOf('\\'));
+        if (extensionIndex <= fileNameStart) {
+            throw new IllegalArgumentException("Input path must include a filename before its extension: " + inputArgument);
+        }
+
+        FileType outputType = inputType == FileType.flipper ? FileType.proxmark3 : FileType.flipper;
+        return new ConversionRequest(inputFile, outputType, inputArgument.substring(0, extensionIndex));
+    }
+
     record ConversionRequest(File inputFile, FileType outputType, String customName) {}
 
     private static void export(NFC nfc, FileType outputType, String customName) throws IOException {
+        File targetFile = outputFileFor(nfc, outputType, customName);
+        if (targetFile.exists() && !confirmOverwrite(targetFile)) {
+            LOGGER.info("Cancelled export; existing file was left unchanged: " + targetFile.getAbsolutePath());
+            return;
+        }
+
         File outputFile;
         String formatName;
         if (outputType == FileType.flipper) {
@@ -99,10 +129,31 @@ public class NfcDumpConverter {
         LOGGER.info(() -> "Exported " + formatName + " file to " + outputFile.getAbsolutePath());
     }
 
+    private static File outputFileFor(NFC nfc, FileType outputType, String customName) {
+        String extension = outputType == FileType.flipper ? ".nfc" : ".json";
+        String outputName = customName;
+        if (outputName.isEmpty()) {
+            outputName = nfc.getCreatedBy() + "-" + Constants.arrToHexString(nfc.getUID(), false, true);
+            if (outputType == FileType.proxmark3) {
+                outputName += "-dump";
+            }
+        }
+        return new File(outputName + extension);
+    }
+
+    private static boolean confirmOverwrite(File targetFile) throws IOException {
+        LOGGER.info("Output file already exists: " + targetFile.getPath() + ". Reply yes to replace it; default is no.");
+        String response = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8)).readLine();
+        return response != null && ("y".equalsIgnoreCase(response.trim()) || "yes".equalsIgnoreCase(response.trim()));
+    }
+
     private static void help() {
-        System.out.println("This tool is for switching nfc file formats between .nfc (Flipper NFC Format) and .json (Proxmark3 NFC Dump Format)");
-        System.out.println("Currently only works for MIFARE 1k, 4k, Mini cards and Mifare Ultralight/NTAGS");
-        System.out.println("convert \"flipper.nfc\" | \"proxmark3-dump.json\" export \"enter-file-name-here-with-extension-you-want-to-convert-to\" (Either .nfc or .json)");
-        System.out.println("Also\nconvert \"flipper.nfc\" | \"proxmark3-dump.json\" export \"default\" nfc(.nfc) | json(.json)");
+        LOGGER.info("""
+                This tool switches NFC file formats between .nfc (Flipper NFC Format) and .json (Proxmark3 NFC Dump Format).
+                Currently supports MIFARE 1k, 4k, Mini, and Mifare Ultralight/NTAG cards.
+                Convert with a custom output path: convert <input> export <output.nfc|output.json>
+                Convert with a generated output name: convert <input> export default <nfc|json>
+                Convert to the other format beside the input: <input.nfc|input.json>
+                """);
     }
 }
