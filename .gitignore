@@ -3,6 +3,8 @@
 
 # Ignore Gradle build output directory
 build
+# ignore built files
+**/bin
 
 .nfc
 .json
