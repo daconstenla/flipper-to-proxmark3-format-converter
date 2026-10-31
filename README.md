@@ -6,7 +6,7 @@ This tool is for switching nfc file formats between .nfc (Flipper NFC Format) an
 
 ## Build from source
 
-Install Java 17 or newer. From the repository root, run:
+Install Java 21 or newer. From the repository root, run:
 
 ```sh
 ./gradlew clean test jar
@@ -17,6 +17,8 @@ On Windows, run:
 ```bat
 gradlew.bat clean test jar
 ```
+
+Run `./gradlew spotlessApply` to format Java sources. The `check` task runs Spotless validation automatically.
 
 The executable jar, including its runtime dependencies, is created at
 `flippertoproxmark3andback/build/libs/flippertoproxmark3andback.jar`.

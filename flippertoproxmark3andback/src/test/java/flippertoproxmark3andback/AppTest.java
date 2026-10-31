@@ -3,6 +3,12 @@
  */
 package flippertoproxmark3andback;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
@@ -13,148 +19,169 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
-
-import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.io.TempDir;
 
 class AppTest {
-    @Test
-    void logsHelpWithoutArguments() throws Exception {
-        String output = runMain();
 
-        assertTrue(output.contains("This tool switches NFC file formats"));
-    }
+  @Test
+  void logsHelpWithoutArguments() throws Exception {
+    String output = runMain();
 
-    @Test
-    void logsHelpForIncompleteConvertCommand() throws Exception {
-        String output = runMain("convert");
+    assertTrue(output.contains("This tool switches NFC file formats"));
+  }
 
-        assertTrue(output.contains("custom output path"));
-    }
+  @Test
+  void logsHelpForIncompleteConvertCommand() throws Exception {
+    String output = runMain("convert");
 
-    @Test
-    void detectsInputFormatFromFileNameNotParentDirectories() {
-        File inputFile = new File("folder.with.dots", "card.NFC");
+    assertTrue(output.contains("custom output path"));
+  }
 
-        assertEquals(Constants.FileType.flipper, Constants.fileTypeFromFile(inputFile));
-    }
+  @Test
+  void detectsInputFormatFromFileNameNotParentDirectories() {
+    File inputFile = new File("folder.with.dots", "card.NFC");
 
-    @Test
-    void returnsNoFormatForUnsupportedExtension() {
-        File inputFile = new File("card.txt");
+    assertEquals(
+      Constants.FileType.flipper,
+      Constants.fileTypeFromFile(inputFile)
+    );
+  }
 
-        assertNull(Constants.fileTypeFromFile(inputFile));
-    }
+  @Test
+  void returnsNoFormatForUnsupportedExtension() {
+    File inputFile = new File("card.txt");
 
-    @Test
-    void parsesCustomOutputUsingFinalExtension() {
-        NfcDumpConverter.ConversionRequest request = NfcDumpConverter.parseArguments(new String[] {
-                "convert", "card.nfc", "export", "folder.with.dots/output.v2.JSON"
-        });
+    assertNull(Constants.fileTypeFromFile(inputFile));
+  }
 
-        assertEquals(Constants.FileType.proxmark3, request.outputType());
-        assertEquals("folder.with.dots/output.v2", request.customName());
-    }
+  @Test
+  void parsesCustomOutputUsingFinalExtension() {
+    NfcDumpConverter.ConversionRequest request =
+      NfcDumpConverter.parseArguments(new String[] {
+        "convert",
+        "card.nfc",
+        "export",
+        "folder.with.dots/output.v2.JSON",
+      });
 
-    @Test
-    void rejectsIncompleteConversionArguments() {
-        assertThrows(IllegalArgumentException.class,
-                () -> NfcDumpConverter.parseArguments(new String[] {"convert"}));
-    }
+    assertEquals(Constants.FileType.proxmark3, request.outputType());
+    assertEquals("folder.with.dots/output.v2", request.customName());
+  }
 
-    @Test
-    void convertsFlipperInputToJsonBesideTheInput(@TempDir Path directory) throws Exception {
-        Path input = directory.resolve("card.version.nfc");
-        Files.writeString(input, "Filetype: Flipper NFC device\nVersion: 4\nDevice type: UID\nUID: 30 60 20 6F\n");
+  @Test
+  void rejectsIncompleteConversionArguments() {
+    assertThrows(IllegalArgumentException.class, () ->
+      NfcDumpConverter.parseArguments(new String[] { "convert" })
+    );
+  }
 
-        NfcDumpConverter.main(new String[] {input.toString()});
+  @Test
+  void convertsFlipperInputToJsonBesideTheInput(@TempDir Path directory)
+    throws Exception {
+    Path input = directory.resolve("card.version.nfc");
+    Files.writeString(
+      input,
+      "Filetype: Flipper NFC device\nVersion: 4\nDevice type: UID\nUID: 30 60 20 6F\n"
+    );
 
-        assertTrue(Files.isRegularFile(directory.resolve("card.version.json")));
-    }
+    NfcDumpConverter.main(new String[] { input.toString() });
 
-    @Test
-    void convertsJsonInputToFlipperBesideTheInput(@TempDir Path directory) throws Exception {
-        Path input = directory.resolve("card.version.json");
-        Files.writeString(input, "{\"Created\":\"Proxmark3\",\"FileType\":\"uid\",\"Card\":{\"UID\":\"3060206F\"}}");
+    assertTrue(Files.isRegularFile(directory.resolve("card.version.json")));
+  }
 
-        NfcDumpConverter.main(new String[] {input.toString()});
+  @Test
+  void convertsJsonInputToFlipperBesideTheInput(@TempDir Path directory)
+    throws Exception {
+    Path input = directory.resolve("card.version.json");
+    Files.writeString(
+      input,
+      "{\"Created\":\"Proxmark3\",\"FileType\":\"uid\",\"Card\":{\"UID\":\"3060206F\"}}"
+    );
 
-        assertTrue(Files.isRegularFile(directory.resolve("card.version.nfc")));
-    }
+    NfcDumpConverter.main(new String[] { input.toString() });
 
-    @Test
-    void leavesExistingOutputUnchangedWhenOverwriteIsDeclined(@TempDir Path directory) throws Exception {
-        Path input = createFlipperInput(directory);
-        Path output = directory.resolve("card.version.json");
-        Files.writeString(output, "keep this file");
+    assertTrue(Files.isRegularFile(directory.resolve("card.version.nfc")));
+  }
 
-        String prompt = runMainWithInput("no\n", input.toString());
+  @Test
+  void leavesExistingOutputUnchangedWhenOverwriteIsDeclined(
+    @TempDir Path directory
+  ) throws Exception {
+    Path input = createFlipperInput(directory);
+    Path output = directory.resolve("card.version.json");
+    Files.writeString(output, "keep this file");
 
-        assertTrue(prompt.contains("Reply yes to replace it; default is no"));
-        assertEquals("keep this file", Files.readString(output));
-    }
+    String prompt = runMainWithInput("no\n", input.toString());
 
-    @Test
-    void replacesExistingOutputAfterConfirmation(@TempDir Path directory) throws Exception {
-        Path input = createFlipperInput(directory);
-        Path output = directory.resolve("card.version.json");
-        Files.writeString(output, "replace this file");
+    assertTrue(prompt.contains("Reply yes to replace it; default is no"));
+    assertEquals("keep this file", Files.readString(output));
+  }
 
-        runMainWithInput("yes\n", input.toString());
+  @Test
+  void replacesExistingOutputAfterConfirmation(@TempDir Path directory)
+    throws Exception {
+    Path input = createFlipperInput(directory);
+    Path output = directory.resolve("card.version.json");
+    Files.writeString(output, "replace this file");
 
-        assertNotEquals("replace this file", Files.readString(output));
-        assertTrue(Files.readString(output).contains("\"FileType\": \"uid\""));
-    }
+    runMainWithInput("yes\n", input.toString());
 
-    private Path createFlipperInput(Path directory) throws Exception {
-        Path input = directory.resolve("card.version.nfc");
-        Files.writeString(input, "Filetype: Flipper NFC device\nVersion: 4\nDevice type: UID\nUID: 30 60 20 6F\n");
-        return input;
-    }
+    assertNotEquals("replace this file", Files.readString(output));
+    assertTrue(Files.readString(output).contains("\"FileType\": \"uid\""));
+  }
 
-    private String runMain(String... args) throws Exception {
-        return runMainWithInput("", args);
-    }
+  private Path createFlipperInput(Path directory) throws Exception {
+    Path input = directory.resolve("card.version.nfc");
+    Files.writeString(
+      input,
+      "Filetype: Flipper NFC device\nVersion: 4\nDevice type: UID\nUID: 30 60 20 6F\n"
+    );
+    return input;
+  }
 
-    private String runMainWithInput(String input, String... args) throws Exception {
-        InputStream originalIn = System.in;
-        StringBuilder capturedLogs = new StringBuilder();
-        Logger logger = Logger.getLogger(NfcDumpConverter.class.getName());
-        Level originalLevel = logger.getLevel();
-        boolean originalUseParentHandlers = logger.getUseParentHandlers();
-        Handler captureHandler = new Handler() {
-            @Override
-            public void publish(LogRecord record) {
-                if (isLoggable(record)) {
-                    capturedLogs.append(record.getMessage()).append(System.lineSeparator());
-                }
-            }
+  private String runMain(String... args) throws Exception {
+    return runMainWithInput("", args);
+  }
 
-            @Override
-            public void flush() {}
-
-            @Override
-            public void close() {}
-        };
-        captureHandler.setLevel(Level.ALL);
-        logger.setLevel(Level.ALL);
-        logger.setUseParentHandlers(false);
-        logger.addHandler(captureHandler);
-        try {
-            System.setIn(new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)));
-            NfcDumpConverter.main(args);
-        } finally {
-            logger.removeHandler(captureHandler);
-            logger.setUseParentHandlers(originalUseParentHandlers);
-            logger.setLevel(originalLevel);
-            System.setIn(originalIn);
+  private String runMainWithInput(String input, String... args)
+    throws Exception {
+    InputStream originalIn = System.in;
+    StringBuilder capturedLogs = new StringBuilder();
+    Logger logger = Logger.getLogger(NfcDumpConverter.class.getName());
+    Level originalLevel = logger.getLevel();
+    boolean originalUseParentHandlers = logger.getUseParentHandlers();
+    Handler captureHandler = new Handler() {
+      @Override
+      public void publish(LogRecord record) {
+        if (isLoggable(record)) {
+          capturedLogs
+            .append(record.getMessage())
+            .append(System.lineSeparator());
         }
-        return capturedLogs.toString();
+      }
+
+      @Override
+      public void flush() {}
+
+      @Override
+      public void close() {}
+    };
+    captureHandler.setLevel(Level.ALL);
+    logger.setLevel(Level.ALL);
+    logger.setUseParentHandlers(false);
+    logger.addHandler(captureHandler);
+    try {
+      System.setIn(
+        new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8))
+      );
+      NfcDumpConverter.main(args);
+    } finally {
+      logger.removeHandler(captureHandler);
+      logger.setUseParentHandlers(originalUseParentHandlers);
+      logger.setLevel(originalLevel);
+      System.setIn(originalIn);
     }
+    return capturedLogs.toString();
+  }
 }

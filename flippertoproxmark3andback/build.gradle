@@ -11,6 +11,7 @@ plugins {
     id 'application'
     id 'java'
     id 'com.gradleup.shadow' version '9.6.1'
+    id 'com.diffplug.spotless' version '8.10.4'
 }
 
 repositories {
@@ -19,6 +20,12 @@ repositories {
     // flatDir {
     //     dirs 'libs'
     // }
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 dependencies {
@@ -44,7 +51,31 @@ tasks.named('test') {
 }
 
 tasks.withType(JavaCompile).configureEach {
+    options.release = 21
     options.compilerArgs += ['-Xlint:unchecked']
+}
+
+spotless {
+    java {
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        endWithNewline()
+        // Use the default importOrder configuration
+        importOrder()
+        forbidWildcardImports() // or expandWildcardImports, see below
+        forbidModuleImports()
+        shortenFullyQualifiedTypes() // replaces fully-qualified type names with simple names + imports
+        // Cleanthat will refactor your code, but it may break your style: apply it before your formatter
+        cleanthat()          // has its own section below
+        prettier(['prettier': '3.9.10', 'prettier-plugin-java': '2.11.0'])
+            .config(['parser': 'java', 'tabWidth': 2, 'plugins': ['prettier-plugin-java']])
+        tableTestFormatter() // has its own section below
+        formatAnnotations()  // fixes formatting of type annotations, see below
+    }
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('spotlessCheck')
 }
 
 jar {
