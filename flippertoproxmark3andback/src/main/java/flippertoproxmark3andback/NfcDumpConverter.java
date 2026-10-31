@@ -1,103 +1,95 @@
 package flippertoproxmark3andback;
 
 import flippertoproxmark3andback.Constants.FileType;
-import flippertoproxmark3andback.Constants.KeyType;
-import flippertoproxmark3andback.Constants.NfcType;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Locale;
 import java.util.logging.Logger;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 
-import flippertoproxmark3andback.Key;
 public class NfcDumpConverter {
     private static final Logger LOGGER = Logger.getLogger(NfcDumpConverter.class.getName());
     
-    public static void main(String[] args) throws IOException, ParseException {//TODO: maybe add an import and export option for binary files?
-        // for (String s : args) {
-        //     System.out.println(s);
-        // }
-        //args = new String[]{"convert", "hf-mf-894F163F-dump.json", "export", "default", "nfc"};
-        //args = new String[]{"convert", "FlipperZero-B4CE3F1B-dump.json", "export", "default", "nfc"};//FlipperZero-894F163F-dump.json
-        //args = new String[]{"convert", "FlipperZero-894F163F-dump.json", "export", "default", "nfc"};
-        //proxmark3-894F163F.nfc
-        //args = new String[]{"convert", "hf-mf-894F163F-dump.json", "export", "default", "nfc"};
-        //args = new String[]{"convert", "hf-mf-894F163F-dump.nfc", "export", "default", "json"};
-        //args = new String[]{"convert", "proxmark3-894F163F.nfc", "export", "default", "json"};
-        //args = new String[]{"convert", "Mifare_4k.nfc", "export", "default", "json"};
-        //args = new String[]{"convert", "FlipperZero-046E0D85F0E3E4-dump.json", "export", "default", "nfc"};//Mini.nfc
-        //args = new String[]{"convert", "Mini.nfc", "export", "default", "json"};
-        //args = new String[]{"convert", "Mini.nfc", "export", "default", "nfc"};
-        //args = new String[]{"convert", "Test04u.nfc", "export", "default", "nfc"};
-        //args = new String[]{"convert", "Test04u.nfc", "export", "default", "json"};//FlipperZero-04548352951190-dump.json
-        //args = new String[]{"convert", "FlipperZero-04548352951190-dump.json", "export", "default", "nfc"};//N203.nfc
-        //args = new String[]{"convert", "N203.nfc", "export", "default", "json"};
-        //args = new String[]{"convert", "N215.nfc", "export", "default", "json"};
-
-        //System.out.println(Constants.flipperFileToCleanedListOfLines(new File("proxmark3-894F163F.nfc")));
-        // ArrayList<String> arr1 = Constants.flipperFileToCleanedListOfLines(new File("N203.nfc"));
-        // for (String s : arr1) {
-        //     System.out.println(s);
-        // }
+    public static void main(String[] args) throws IOException, ParseException {
         runProgramWithArguments(args);
-
-       
-
-        // java -jar flippertoproxmark3andback.jar convert "flipper.nfc" | "proxmark3-dump.json" export "enter-file-name-here-with-extension-you-want-to-convert-to" (Either .nfc or .json)
-
     }
+
     private static void runProgramWithArguments(String[] args) throws ParseException, IOException {
-         if (args.length <= 0 || args[0].equals("help")) {//Note "" in command line just don't exist after inputing them
+        if (args.length == 0 || "help".equals(args[0])) {
             help();
-        } else if (args[0].equals("convert") ) {
-            String filePathInput = args[1].replaceAll("\"", "");
-            LOGGER.info(() -> "Converting input file " + filePathInput);
-            NFC nfc = new NFC();
-            if (new File(filePathInput).exists()) {
-                nfc = NFCFactory.createNFCFromFile(new File(filePathInput));
-                //nfc = new MifareClassic(new File(filePathInput));
-            } else {
-                LOGGER.severe("Input file does not exist: " + filePathInput);
+            return;
+        }
+
+        if (!"convert".equals(args[0]) || args.length < 4 || !"export".equals(args[2])) {
+            help();
+            return;
+        }
+
+        File inputFile = new File(args[1]);
+        LOGGER.info(() -> "Converting input file " + inputFile.getPath());
+        if (!inputFile.isFile()) {
+            LOGGER.severe("Input file does not exist or is not a regular file: " + inputFile.getPath());
+            return;
+        }
+
+        NFC nfc = NFCFactory.createNFCFromFile(inputFile);
+        String outputArgument = args[3];
+        if ("default".equals(outputArgument)) {
+            if (args.length != 5) {
+                help();
                 return;
             }
-            
-            
-            if (args[2].equals("export")) {
-                if (!args[3].equals("default")) {
-                    String filePathOutput = args[3].replaceAll("\"", "");
-                    if (Constants.fileExtensionToFileType.get(filePathOutput.substring(filePathOutput.indexOf(".")+1)) == FileType.flipper) {//uses file extension to id what type of file format to export to
-                        File outputFile = nfc.exportAsFlipperNfc(filePathOutput.substring(0, filePathOutput.indexOf(".")));
-                        LOGGER.info(() -> "Exported Flipper NFC file to " + outputFile.getAbsolutePath());
-                    } else if (Constants.fileExtensionToFileType.get(filePathOutput.substring(filePathOutput.indexOf(".")+1)) == FileType.proxmark3) {
-                        File outputFile = nfc.exportAsProxmark3Dump(filePathOutput.substring(0, filePathOutput.indexOf(".")));
-                        LOGGER.info(() -> "Exported Proxmark3 JSON file to " + outputFile.getAbsolutePath());
-                    } else {
-                        LOGGER.severe("Unsupported output file extension: " + filePathOutput);
-                    }
-                } else if (args[3].equals("default")) {
-                    if (args[4].equals("nfc")) {
-                        File outputFile = nfc.exportAsFlipperNfc("");
-                        LOGGER.info(() -> "Exported Flipper NFC file to " + outputFile.getAbsolutePath());
-                    } else if (args[4].equals("json")) {
-                        File outputFile = nfc.exportAsProxmark3Dump("");
-                        LOGGER.info(() -> "Exported Proxmark3 JSON file to " + outputFile.getAbsolutePath());
-                    } else {
-                        help();
-                    }
-                } else {
-                    help();
-                }
-                    
+
+            FileType outputType;
+            if ("nfc".equals(args[4])) {
+                outputType = FileType.flipper;
+            } else if ("json".equals(args[4])) {
+                outputType = FileType.proxmark3;
             } else {
                 help();
+                return;
             }
-            
+
+            export(nfc, outputType, "");
+            return;
         }
+
+        if (args.length != 4) {
+            help();
+            return;
+        }
+
+        int extensionIndex = outputArgument.lastIndexOf('.');
+        int fileNameStart = Math.max(outputArgument.lastIndexOf('/'), outputArgument.lastIndexOf('\\'));
+        if (extensionIndex <= fileNameStart || extensionIndex == outputArgument.length() - 1) {
+            LOGGER.severe("Output path must have a .nfc or .json extension: " + outputArgument);
+            return;
+        }
+
+        String extension = outputArgument.substring(extensionIndex + 1).toLowerCase(Locale.ROOT);
+        FileType outputType = Constants.fileExtensionToFileType.get(extension);
+        if (outputType == null) {
+            LOGGER.severe("Unsupported output file extension: " + extension);
+            return;
+        }
+
+        export(nfc, outputType, outputArgument.substring(0, extensionIndex));
+    }
+
+    private static void export(NFC nfc, FileType outputType, String customName) throws IOException {
+        File outputFile;
+        String formatName;
+        if (outputType == FileType.flipper) {
+            outputFile = nfc.exportAsFlipperNfc(customName);
+            formatName = "Flipper NFC";
+        } else {
+            outputFile = nfc.exportAsProxmark3Dump(customName);
+            formatName = "Proxmark3 JSON";
+        }
+
+        LOGGER.info(() -> "Exported " + formatName + " file to " + outputFile.getAbsolutePath());
     }
 
     private static void help() {

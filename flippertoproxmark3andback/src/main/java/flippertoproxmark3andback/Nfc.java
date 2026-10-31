@@ -37,8 +37,10 @@ public class NFC {
 
     }
     public NFC(File file) throws FileNotFoundException, org.json.simple.parser.ParseException {
-        String path = file.getAbsolutePath();
-        this.importFileType = Constants.fileExtensionToFileType.get(path.substring(path.indexOf(".")+1));
+        this.importFileType = Constants.fileTypeFromFile(file);
+        if (this.importFileType == null) {
+            throw new IllegalArgumentException("Unsupported NFC dump file extension: " + file.getName());
+        }
         FileType fileType = importFileType;
         LOGGER.fine(() -> "Reading NFC data from " + file.getName());
         //System.out.println(importFileType);

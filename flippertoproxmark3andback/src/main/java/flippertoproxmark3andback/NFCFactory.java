@@ -22,8 +22,10 @@ public class NFCFactory {
     
     public static NFC createNFCFromFile(File file) throws FileNotFoundException, ParseException {
         LOGGER.fine(() -> "Inspecting NFC dump " + file.getAbsolutePath());
-        String path = file.getAbsolutePath();
-        FileType fileType = Constants.fileExtensionToFileType.get(path.substring(path.indexOf(".")+1));
+        FileType fileType = Constants.fileTypeFromFile(file);
+        if (fileType == null) {
+            throw new IllegalArgumentException("Unsupported NFC dump file extension: " + file.getName());
+        }
         if (fileType == FileType.flipper) {
             ArrayList<String> lines = Constants.flipperFileToCleanedListOfLines(file);
             //Filetype: Flipper NFC Device

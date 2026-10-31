@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -110,6 +111,15 @@ public static HashMap<String, MifareUltralightType> mfuVersionPlusPageTotalToMfu
         put("nfc", FileType.flipper);
         put("json", FileType.proxmark3);
     }};
+
+    public static FileType fileTypeFromFile(File file) {
+        String fileName = file.getName();
+        int extensionIndex = fileName.lastIndexOf('.');
+        if (extensionIndex < 0 || extensionIndex == fileName.length() - 1) {
+            return null;
+        }
+        return fileExtensionToFileType.get(fileName.substring(extensionIndex + 1).toLowerCase(Locale.ROOT));
+    }
     
     public HashMap<String, String> flipperDeviceToProxmarkFiletype = new HashMap<String, String>() {{
     put("ISO15693", null);//Don't know what the null types are yet

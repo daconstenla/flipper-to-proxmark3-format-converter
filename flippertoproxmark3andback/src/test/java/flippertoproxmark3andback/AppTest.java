@@ -3,12 +3,55 @@
  */
 package flippertoproxmark3andback;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
+
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AppTest {
-    @Test void appHasAGreeting() {
-        //App classUnderTest = new App();
-        //assertNotNull(classUnderTest.getGreeting(), "app should have a greeting");
+    @Test
+    void printsHelpWithoutArguments() throws Exception {
+        String output = runMain();
+
+        assertTrue(output.contains("This tool is for switching nfc file formats"));
+    }
+
+    @Test
+    void printsHelpForIncompleteConvertCommand() throws Exception {
+        String output = runMain("convert");
+
+        assertTrue(output.contains("flipper.nfc"));
+    }
+
+    @Test
+    void detectsInputFormatFromFileNameNotParentDirectories() {
+        File inputFile = new File("folder.with.dots", "card.NFC");
+
+        assertEquals(Constants.FileType.flipper, Constants.fileTypeFromFile(inputFile));
+    }
+
+    @Test
+    void returnsNoFormatForUnsupportedExtension() {
+        File inputFile = new File("card.txt");
+
+        assertNull(Constants.fileTypeFromFile(inputFile));
+    }
+
+    private String runMain(String... args) throws Exception {
+        PrintStream originalOut = System.out;
+        ByteArrayOutputStream capturedOutput = new ByteArrayOutputStream();
+        try (PrintStream outputStream = new PrintStream(capturedOutput, true, StandardCharsets.UTF_8)) {
+            System.setOut(outputStream);
+            NfcDumpConverter.main(args);
+        } finally {
+            System.setOut(originalOut);
+        }
+        return capturedOutput.toString(StandardCharsets.UTF_8);
     }
 }
